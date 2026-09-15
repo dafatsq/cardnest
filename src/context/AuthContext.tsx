@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import type { User, Session } from "@supabase/supabase-js"
 
 type AuthContextType = {
@@ -28,46 +27,43 @@ export const useAuth = () => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  // We use a dynamic import to lazily create the Supabase client.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [supabase, setSupabase] = useState<any>(null)
   const router = useRouter()
 
-  // Guard: don't initialize Supabase client if env vars are missing
-  // (e.g. during static generation without env configured).
-  const hasEnv =
-    typeof process.env.NEXT_PUBLIC_SUPABASE_URL !== "undefined" &&
-    process.env.NEXT_PUBLIC_SUPABASE_URL !== "" &&
-    typeof process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== "undefined" &&
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== ""
-
-  const supabase = hasEnv ? createClient() : null
-
   useEffect(() => {
-    if (!supabase) {
-      setUser(null)
-      setLoading(false)
-      return
-    }
+    // Lazily create the supabase client inside the effect so it only
+    // runs on the client, not during static prerendering.
+    const init = async () => {
+      const { createClient } = await import("@/lib/supabase/client")
+      const client = createClient()
+      setSupabase(() => client)
 
-    const getSession = async () => {
       const {
         data: { user },
-      } = await supabase.auth.getUser()
+      } = await client.auth.getUser()
       setUser(user)
       setLoading(false)
+
+      const {
+        data: { subscription },
+      } = client.auth.onAuthStateChange((_event: string, session: Session | null) => {
+        setUser(session?.user ?? null)
+        router.refresh()
+      })
+
+      return () => {
+        subscription.unsubscribe()
+      }
     }
 
-    getSession()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
-      setUser(session?.user ?? null)
-      router.refresh()
-    })
+    const cleanup = init()
 
     return () => {
-      subscription.unsubscribe()
+      cleanup.then((cb) => cb?.())
     }
-  }, [supabase, router])
+  }, [router])
 
   const signOut = async () => {
     if (supabase) {
