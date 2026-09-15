@@ -53,11 +53,11 @@ export function InteractiveFlashcard({
       style={{
         animationDelay: `${Math.min(index * 45, 450)}ms`,
       }}
-      className="perspective-1000 group relative h-72 w-full cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-2xl animate-card-enter active:scale-[0.985] transition-transform duration-200"
+      className="perspective-card group relative h-72 w-full cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-2xl animate-card-enter active:scale-[0.985] transition-transform duration-300"
     >
       <div
-        className={`transform-style-3d relative h-full w-full rounded-2xl transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          isFlipped ? "rotate-y-180" : ""
+        className={`card-flip-body relative h-full w-full rounded-2xl transition-all duration-[800ms] ${
+          isFlipped ? "rotate-y-180 shadow-xl shadow-indigo-500/15" : "shadow-sm hover:shadow-lg hover:shadow-indigo-500/10"
         }`}
       >
         {/* FRONT SIDE */}
@@ -163,7 +163,7 @@ export function InteractiveFlashcard({
 
           {/* Flip Hint Footer */}
           <div className="mt-auto pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center text-xs font-medium text-indigo-600 dark:text-indigo-400 gap-1.5">
-            <RotateCw className="h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-180" />
+            <RotateCw className="h-3.5 w-3.5 transition-transform duration-800 group-hover:rotate-180" />
             <span>Click or press space to flip</span>
           </div>
         </div>
@@ -216,7 +216,7 @@ export function InteractiveFlashcard({
 
           {/* Flip Hint Footer */}
           <div className="mt-auto pt-3 border-t border-indigo-100/60 dark:border-slate-800 flex items-center justify-center text-xs font-medium text-slate-500 dark:text-slate-400 gap-1.5">
-            <RotateCw className="h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-180" />
+            <RotateCw className="h-3.5 w-3.5 transition-transform duration-800 group-hover:rotate-180" />
             <span>Click to flip to front</span>
           </div>
         </div>

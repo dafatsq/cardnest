@@ -238,13 +238,13 @@ function StudyModalContent({
                 role="button"
                 tabIndex={0}
                 onClick={() => setIsFlipped((prev) => !prev)}
-                className={`perspective-1000 group relative h-80 w-full max-w-lg cursor-pointer focus:outline-none ${
+                className={`perspective-card group relative h-80 w-full max-w-lg cursor-pointer focus:outline-none ${
                   slideDirection === "right" ? "animate-slide-right" : "animate-slide-left"
                 }`}
               >
                 <div
-                  className={`transform-style-3d relative h-full w-full rounded-3xl transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                    isFlipped ? "rotate-y-180" : ""
+                  className={`card-flip-body relative h-full w-full rounded-3xl transition-all duration-[800ms] ${
+                    isFlipped ? "rotate-y-180 shadow-2xl shadow-indigo-500/20" : ""
                   }`}
                 >
                   {/* FRONT SIDE */}
@@ -277,7 +277,7 @@ function StudyModalContent({
                     </div>
 
                     <div className="flex items-center justify-center gap-1.5 text-xs text-indigo-400 font-medium">
-                      <RotateCw className="h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-180" />
+                      <RotateCw className="h-3.5 w-3.5 transition-transform duration-800 group-hover:rotate-180" />
                       <span>Click card or press Space to reveal answer</span>
                     </div>
                   </div>
@@ -312,7 +312,7 @@ function StudyModalContent({
                     </div>
 
                     <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400">
-                      <RotateCw className="h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-180" />
+                      <RotateCw className="h-3.5 w-3.5 transition-transform duration-800 group-hover:rotate-180" />
                       <span>Click to flip back</span>
                     </div>
                   </div>

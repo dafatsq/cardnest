@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @layer utilities {
-  .perspective-1000 {
-    perspective: 1000px;
+  .perspective-1000,
+  .perspective-card {
+    perspective: 1400px;
   }
   .transform-style-3d {
     transform-style: preserve-3d;
@@ -13,6 +14,11 @@
   }
   .rotate-y-180 {
     transform: rotateY(180deg);
+  }
+  .card-flip-body {
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.34, 1.12, 0.52, 1.15);
+    will-change: transform;
   }
 }
 
