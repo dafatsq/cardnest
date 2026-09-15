@@ -1,7 +1,10 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { updateCategoryAction } from "@/app/actions/category-actions"
+import { Navbar } from "@/components/Navbar"
+import { CategoryForm } from "@/components/CategoryForm"
+import { ChevronRight, Edit3 } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -18,7 +21,7 @@ export default async function EditCategoryPage({
   } = await supabase.auth.getUser()
 
   if (!user) {
-    notFound()
+    redirect("/login")
   }
 
   const { data: category } = await supabase
@@ -33,42 +36,51 @@ export default async function EditCategoryPage({
   }
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="mx-auto max-w-2xl">
-        <h1 className="mb-6 text-2xl font-bold">Edit Category</h1>
+    <div className="flex min-h-screen flex-col bg-slate-50/50 dark:bg-slate-950">
+      <Navbar user={user} />
 
-        <form action={updateCategoryAction} className="space-y-4">
-          <input type="hidden" name="id" value={category.id} />
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        {/* Breadcrumb */}
+        <div className="mb-6 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <Link href="/" className="hover:text-indigo-600 dark:hover:text-indigo-400">
+            Dashboard
+          </Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <Link href="/categories" className="hover:text-indigo-600 dark:hover:text-indigo-400">
+            Decks
+          </Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <Link href={`/categories/${category.id}`} className="hover:text-indigo-600 dark:hover:text-indigo-400">
+            {category.name}
+          </Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-slate-900 dark:text-slate-100">Edit</span>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Category Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              defaultValue={category.name}
-              required
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
+        {/* Title */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+              <Edit3 className="h-5 w-5" />
+            </span>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+                Edit Category Deck
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Rename &ldquo;{category.name}&rdquo;
+              </p>
+            </div>
           </div>
+        </div>
 
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              Save Changes
-            </button>
-            <Link
-              href="/"
-              className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </Link>
-          </div>
-        </form>
-      </div>
+        <CategoryForm
+          initialName={category.name}
+          categoryId={category.id}
+          action={updateCategoryAction}
+          isEditing={true}
+        />
+      </main>
     </div>
   )
 }

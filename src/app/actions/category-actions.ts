@@ -18,14 +18,17 @@ export async function createCategoryAction(formData: FormData): Promise<void> {
   const name = formData.get("name") as string
 
   if (!name || name.trim().length === 0) {
-    // Redirect back with an error query param
     redirect("/?error=Category+name+is+required")
   }
 
-  const { error } = await supabase.from("categories").insert({
-    user_id: user.id,
-    name: name.trim(),
-  })
+  const { data, error } = await supabase
+    .from("categories")
+    .insert({
+      user_id: user.id,
+      name: name.trim(),
+    })
+    .select()
+    .single()
 
   if (error) {
     redirect(`/?error=${encodeURIComponent(error.message)}`)
@@ -33,7 +36,11 @@ export async function createCategoryAction(formData: FormData): Promise<void> {
 
   revalidatePath("/")
   revalidatePath("/categories")
-  redirect("/")
+  if (data?.id) {
+    redirect(`/categories/${data.id}`)
+  } else {
+    redirect("/")
+  }
 }
 
 export async function updateCategoryAction(formData: FormData): Promise<void> {
@@ -65,7 +72,9 @@ export async function updateCategoryAction(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/")
-  redirect("/")
+  revalidatePath("/categories")
+  revalidatePath(`/categories/${id}`)
+  redirect(`/categories/${id}`)
 }
 
 export async function deleteCategoryAction(formData: FormData): Promise<void> {
@@ -88,5 +97,6 @@ export async function deleteCategoryAction(formData: FormData): Promise<void> {
     .eq("user_id", user.id)
 
   revalidatePath("/")
-  redirect("/")
+  revalidatePath("/categories")
+  redirect("/?message=Category+deleted+successfully")
 }

@@ -4,6 +4,10 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
+function sanitizeFilename(name: string) {
+  return name.replace(/[^a-zA-Z0-9.-]/g, "_")
+}
+
 export async function createFlashcardAction(formData: FormData): Promise<void> {
   const supabase = await createClient()
 
@@ -30,13 +34,14 @@ export async function createFlashcardAction(formData: FormData): Promise<void> {
 
   // Upload front image
   if (frontImage && frontImage.size > 0) {
-    const filePath = `${user.id}/${categoryId}/front-${Date.now()}-${frontImage.name}`
+    const cleanName = sanitizeFilename(frontImage.name)
+    const filePath = `${user.id}/${categoryId}/front-${Date.now()}-${cleanName}`
     const { error: uploadError } = await supabase.storage
       .from("flashcard-images")
       .upload(filePath, frontImage)
 
     if (uploadError) {
-      redirect(`/?error=${encodeURIComponent("Failed to upload front image")}`)
+      redirect(`/categories/${categoryId}?error=${encodeURIComponent("Failed to upload front image")}`)
     }
 
     const {
@@ -48,13 +53,14 @@ export async function createFlashcardAction(formData: FormData): Promise<void> {
 
   // Upload back image
   if (backImage && backImage.size > 0) {
-    const filePath = `${user.id}/${categoryId}/back-${Date.now()}-${backImage.name}`
+    const cleanName = sanitizeFilename(backImage.name)
+    const filePath = `${user.id}/${categoryId}/back-${Date.now()}-${cleanName}`
     const { error: uploadError } = await supabase.storage
       .from("flashcard-images")
       .upload(filePath, backImage)
 
     if (uploadError) {
-      redirect(`/?error=${encodeURIComponent("Failed to upload back image")}`)
+      redirect(`/categories/${categoryId}?error=${encodeURIComponent("Failed to upload back image")}`)
     }
 
     const {
@@ -64,15 +70,21 @@ export async function createFlashcardAction(formData: FormData): Promise<void> {
     backImageUrl = publicUrl
   }
 
-  await supabase.from("flashcards").insert({
+  const { error: insertError } = await supabase.from("flashcards").insert({
     category_id: categoryId,
-    front_text: frontText || null,
-    back_text: backText || null,
+    front_text: frontText?.trim() || null,
+    back_text: backText?.trim() || null,
     front_image_url: frontImageUrl,
     back_image_url: backImageUrl,
   })
 
+  if (insertError) {
+    redirect(`/categories/${categoryId}?error=${encodeURIComponent(insertError.message)}`)
+  }
+
   revalidatePath("/")
+  revalidatePath("/categories")
+  revalidatePath(`/categories/${categoryId}`)
   redirect(`/categories/${categoryId}`)
 }
 
@@ -96,8 +108,8 @@ export async function updateFlashcardAction(formData: FormData): Promise<void> {
   const existingFrontImage = formData.get("existing_front_image") as string
   const existingBackImage = formData.get("existing_back_image") as string
 
-  if (!categoryId) {
-    redirect("/?error=Category+ID+is+required")
+  if (!categoryId || !id) {
+    redirect("/?error=Card+and+Category+ID+are+required")
   }
 
   let frontImageUrl: string | null = existingFrontImage || null
@@ -105,13 +117,14 @@ export async function updateFlashcardAction(formData: FormData): Promise<void> {
 
   // Upload new front image
   if (frontImage && frontImage.size > 0) {
-    const filePath = `${user.id}/${categoryId}/front-${Date.now()}-${frontImage.name}`
+    const cleanName = sanitizeFilename(frontImage.name)
+    const filePath = `${user.id}/${categoryId}/front-${Date.now()}-${cleanName}`
     const { error: uploadError } = await supabase.storage
       .from("flashcard-images")
       .upload(filePath, frontImage)
 
     if (uploadError) {
-      redirect(`/?error=${encodeURIComponent("Failed to upload front image")}`)
+      redirect(`/categories/${categoryId}?error=${encodeURIComponent("Failed to upload front image")}`)
     }
 
     const {
@@ -123,13 +136,14 @@ export async function updateFlashcardAction(formData: FormData): Promise<void> {
 
   // Upload new back image
   if (backImage && backImage.size > 0) {
-    const filePath = `${user.id}/${categoryId}/back-${Date.now()}-${backImage.name}`
+    const cleanName = sanitizeFilename(backImage.name)
+    const filePath = `${user.id}/${categoryId}/back-${Date.now()}-${cleanName}`
     const { error: uploadError } = await supabase.storage
       .from("flashcard-images")
       .upload(filePath, backImage)
 
     if (uploadError) {
-      redirect(`/?error=${encodeURIComponent("Failed to upload back image")}`)
+      redirect(`/categories/${categoryId}?error=${encodeURIComponent("Failed to upload back image")}`)
     }
 
     const {
@@ -139,11 +153,11 @@ export async function updateFlashcardAction(formData: FormData): Promise<void> {
     backImageUrl = publicUrl
   }
 
-  await supabase
+  const { error: updateError } = await supabase
     .from("flashcards")
     .update({
-      front_text: frontText || null,
-      back_text: backText || null,
+      front_text: frontText?.trim() || null,
+      back_text: backText?.trim() || null,
       front_image_url: frontImageUrl,
       back_image_url: backImageUrl,
       updated_at: new Date().toISOString(),
@@ -151,7 +165,12 @@ export async function updateFlashcardAction(formData: FormData): Promise<void> {
     .eq("id", id)
     .eq("category_id", categoryId)
 
+  if (updateError) {
+    redirect(`/categories/${categoryId}?error=${encodeURIComponent(updateError.message)}`)
+  }
+
   revalidatePath("/")
+  revalidatePath("/categories")
   revalidatePath(`/categories/${categoryId}`)
   redirect(`/categories/${categoryId}`)
 }
@@ -177,6 +196,7 @@ export async function deleteFlashcardAction(formData: FormData): Promise<void> {
     .eq("category_id", categoryId)
 
   revalidatePath("/")
+  revalidatePath("/categories")
   revalidatePath(`/categories/${categoryId}`)
   redirect(`/categories/${categoryId}`)
 }

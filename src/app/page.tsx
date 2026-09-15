@@ -3,12 +3,20 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Navbar } from "@/components/Navbar"
 import { CategoryList } from "@/components/CategoryList"
-
-// Don't statically prerender — this page requires a user session.
-export const dynamic = "force-dynamic"
 import { FlashcardList } from "@/components/FlashcardList"
+import { Plus, Sparkles, Folder, Layers, AlertTriangle } from "lucide-react"
 
-export default async function DashboardPage() {
+import { Flashcard } from "@/types"
+import type { PostgrestError } from "@supabase/supabase-js"
+
+export const dynamic = "force-dynamic"
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; message?: string }>
+}) {
+  const { error: queryError, message: queryMessage } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -26,40 +34,111 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
-  // Fetch all flashcards across all categories for the user
-  const { data: flashcards, error: flashcardsError } =
-    await supabase
+  const categoryList = categories ?? []
+  const categoryIds = categoryList.map((c) => c.id)
+
+  // Fetch all flashcards only if user has categories
+  let flashcards: Flashcard[] = []
+  let flashcardsError: PostgrestError | null = null
+
+  if (categoryIds.length > 0) {
+    const res = await supabase
       .from("flashcards")
       .select("*")
-      .in(
-        "category_id",
-        (categories ?? []).map((c) => c.id),
-      )
+      .in("category_id", categoryIds)
       .order("created_at", { ascending: false })
 
+    flashcards = (res.data as Flashcard[]) ?? []
+    flashcardsError = res.error
+  }
+
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-slate-50/50 dark:bg-slate-950">
       <Navbar user={user} />
-      <div className="flex flex-1 overflow-hidden">
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-2xl font-bold">My CardNest</h1>
-            <Link
-              href="/categories/new"
-              className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              + New Category
-            </Link>
+
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        {/* Error / Alert banner */}
+        {queryError && (
+          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+            <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-500" />
+            <p className="font-medium">{queryError}</p>
           </div>
+        )}
 
-          <CategoryList
-            categories={categories ?? []}
-            error={categoriesError?.message}
-          />
+        {queryMessage && (
+          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <Sparkles className="h-5 w-5 flex-shrink-0 text-emerald-500" />
+            <p className="font-medium">{queryMessage}</p>
+          </div>
+        )}
 
-          <FlashcardList flashcards={flashcards ?? []} error={flashcardsError?.message} />
-        </main>
-      </div>
+        {/* Dashboard Welcome & Stats Banner */}
+        <div className="relative mb-10 overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 p-6 sm:p-8 text-white shadow-lg">
+          <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur-md">
+                <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                <span>CardNest Smart Learning</span>
+              </div>
+              <h1 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl text-white">
+                Welcome back, {user.email?.split("@")[0]}!
+              </h1>
+              <p className="mt-1.5 max-w-xl text-sm text-indigo-200">
+                Create categories, memorize key concepts with 3D flip flashcards, and master your subjects with dedicated study sessions.
+              </p>
+            </div>
+
+            {/* Quick Stats & Action */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-md">
+                <Folder className="h-5 w-5 text-indigo-300" />
+                <div>
+                  <div className="text-xl font-bold leading-none">
+                    {categoryList.length}
+                  </div>
+                  <div className="text-xs text-indigo-200 mt-0.5">Decks</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-md">
+                <Layers className="h-5 w-5 text-indigo-300" />
+                <div>
+                  <div className="text-xl font-bold leading-none">
+                    {flashcards.length}
+                  </div>
+                  <div className="text-xs text-indigo-200 mt-0.5">Flashcards</div>
+                </div>
+              </div>
+
+              <Link
+                href="/categories/new"
+                className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-indigo-900 shadow-md transition-all hover:bg-indigo-50 hover:shadow-lg"
+              >
+                <Plus className="h-4 w-4 stroke-[3]" />
+                New Category
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Categories Section */}
+        <CategoryList
+          categories={categoryList}
+          flashcards={flashcards}
+          error={categoriesError?.message}
+        />
+
+        {/* Flashcards Section */}
+        {categoryList.length > 0 && (
+          <div className="mt-12">
+            <FlashcardList
+              flashcards={flashcards}
+              categories={categoryList}
+              error={flashcardsError?.message}
+            />
+          </div>
+        )}
+      </main>
     </div>
   )
 }

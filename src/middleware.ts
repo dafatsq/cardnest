@@ -4,23 +4,11 @@ import type { Database } from "@/lib/supabase/client"
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  // Public routes — anyone can access these without auth.
   const publicRoutes = ["/login", "/signup"]
-  if (publicRoutes.some((route) => pathname.startsWith(route))) {
-    return NextResponse.next()
-  }
 
-  // API routes handle their own auth, and Next.js internals are public.
-  if (
-    pathname.startsWith("/api/") ||
-    pathname.startsWith("/_next/") ||
-    pathname.startsWith("/favicon.ico")
-  ) {
-    return NextResponse.next()
-  }
-
-  const response = NextResponse.next({ request })
+  let response = NextResponse.next({
+    request,
+  })
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,20 +19,35 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          for (const cookie of cookiesToSet) {
-            response.cookies.set(cookie)
-          }
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          response = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
         },
       },
     },
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!user) {
+  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route))
+
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     url.searchParams.set("redirect", pathname)
+    return NextResponse.redirect(url)
+  }
+
+  if (user && isPublicRoute) {
+    const url = request.nextUrl.clone()
+    url.pathname = "/"
+    url.searchParams.delete("redirect")
     return NextResponse.redirect(url)
   }
 
