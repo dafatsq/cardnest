@@ -117,15 +117,15 @@ export function DeckDetailView({ category, flashcards, error }: Props) {
         <span className="text-slate-900 dark:text-slate-100">{category.name}</span>
       </div>
 
-      {/* Header Banner */}
-      <div className="mb-8 flex flex-col gap-5 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900 md:flex-row md:items-center md:justify-between">
+      {/* Header Banner - Open, breathable, non-boxed */}
+      <div className="mb-8 flex flex-col gap-5 pb-6 border-b border-slate-200/80 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+          <div className="flex items-center gap-3.5">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
               <Layers className="h-6 w-6" />
             </span>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
                   {category.name}
                 </h1>
@@ -137,7 +137,7 @@ export function DeckDetailView({ category, flashcards, error }: Props) {
                   <Edit3 className="h-4 w-4" />
                 </Link>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
                 {flashcards.length === 1 ? "1 flashcard in deck" : `${flashcards.length} flashcards in deck`}
               </p>
             </div>
@@ -150,7 +150,7 @@ export function DeckDetailView({ category, flashcards, error }: Props) {
             <button
               type="button"
               onClick={() => setIsStudyOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-500 hover:shadow-lg"
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 transition-all hover:bg-indigo-500 hover:shadow-indigo-600/35 active:scale-95"
             >
               <Play className="h-4 w-4 fill-current" />
               Practice Deck
@@ -159,7 +159,7 @@ export function DeckDetailView({ category, flashcards, error }: Props) {
 
           <Link
             href={`/categories/${category.id}/flashcards/new`}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 active:scale-95"
           >
             <Plus className="h-4 w-4" />
             New Flashcard
