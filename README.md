@@ -48,7 +48,15 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 cp .env.example .env.local
 ```
 
-### 4. Run locally
+### 4. Configure Supabase Auth (important for email confirmations)
+
+In your Supabase project dashboard, go to **Authentication → Settings** and:
+- Set **Site URL** to your production URL (e.g. `https://cardnest-rose.vercel.app`)
+- Add `https://cardnest-rose.vercel.app/callback` to **Redirect URLs** (for auth flows)
+
+Then update `.env.local` with the correct `NEXT_PUBLIC_SITE_URL`.
+
+### 5. Run locally
 
 ```bash
 npm run dev
