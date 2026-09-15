@@ -112,14 +112,15 @@ export function CategoryList({ categories, flashcards = [], error }: Props) {
 
       {/* Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filteredCategories.map((category) => {
+        {filteredCategories.map((category, index) => {
           const cardCount = cardCountMap.get(category.id) || 0
           const isConfirming = deletingId === category.id
 
           return (
             <div
               key={category.id}
-              className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-900/60"
+              style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
+              className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/10 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-800 animate-card-enter active:scale-[0.99]"
             >
               {/* Category info */}
               <div>
@@ -197,7 +198,7 @@ export function CategoryList({ categories, flashcards = [], error }: Props) {
                   <button
                     type="button"
                     onClick={() => setStudyCategory(category)}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 transition-all hover:bg-indigo-100 active:scale-95 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
                   >
                     <Play className="h-3 w-3 fill-current" />
                     Study

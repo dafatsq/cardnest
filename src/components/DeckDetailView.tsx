@@ -154,9 +154,10 @@ export function DeckDetailView({ category, flashcards, error }: Props) {
 
           {/* Cards Grid */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredCards.map((card) => (
+            {filteredCards.map((card, index) => (
               <InteractiveFlashcard
                 key={card.id}
+                index={index}
                 card={card}
                 categoryName={category.name}
                 categoryId={category.id}

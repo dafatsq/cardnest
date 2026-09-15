@@ -163,9 +163,10 @@ export function FlashcardList({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredFlashcards.map((card) => (
+          {filteredFlashcards.map((card, index) => (
             <InteractiveFlashcard
-              key={card.id}
+              key={`${selectedCategoryId}-${card.id}`}
+              index={index}
               card={card}
               categoryName={categoryMap.get(card.category_id)}
               showCategoryBadge={selectedCategoryId === "all"}
