@@ -67,9 +67,7 @@ export default function SignupPage() {
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between border-r border-slate-200/80 bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-950 p-12 text-white dark:border-slate-800">
         <div>
           <Link href="/" className="inline-flex items-center gap-2.5 font-bold tracking-tight text-white text-xl">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/30">
-              <Layers className="h-5 w-5" />
-            </span>
+            <Layers className="h-7 w-7 text-indigo-400 shrink-0" />
             CardNest
           </Link>
         </div>
@@ -113,9 +111,7 @@ export default function SignupPage() {
           {/* Mobile Logo */}
           <div className="mb-8 lg:hidden text-center">
             <Link href="/" className="inline-flex items-center gap-2 font-bold tracking-tight text-slate-900 dark:text-white text-xl">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white">
-                <Layers className="h-5 w-5" />
-              </span>
+              <Layers className="h-7 w-7 text-indigo-600 dark:text-indigo-400 shrink-0" />
               CardNest
             </Link>
           </div>

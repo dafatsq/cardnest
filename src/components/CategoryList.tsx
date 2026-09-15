@@ -61,9 +61,7 @@ export function CategoryList({ categories, flashcards = [], error }: Props) {
   if (!categories.length) {
     return (
       <div className="mb-10 rounded-3xl border border-dashed border-slate-300 bg-white/60 p-10 text-center dark:border-slate-800 dark:bg-slate-900/40">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
-          <Folder className="h-8 w-8" />
-        </div>
+        <Folder className="mx-auto h-12 w-12 text-indigo-500/80 dark:text-indigo-400 stroke-[1.5]" />
         <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
           No categories yet
         </h3>
@@ -125,9 +123,7 @@ export function CategoryList({ categories, flashcards = [], error }: Props) {
               {/* Category info */}
               <div>
                 <div className="flex items-start justify-between gap-2">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
-                    <Folder className="h-5 w-5" />
-                  </span>
+                  <Folder className="h-6 w-6 text-indigo-600 dark:text-indigo-400 shrink-0 stroke-[1.75]" />
 
                   {/* Actions */}
                   <div className="flex items-center gap-1">

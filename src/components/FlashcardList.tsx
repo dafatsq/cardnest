@@ -68,9 +68,7 @@ export function FlashcardList({
   if (!flashcards.length) {
     return (
       <div className="rounded-3xl border border-dashed border-slate-300 bg-white/60 p-10 text-center dark:border-slate-800 dark:bg-slate-900/40">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
-          <Layers className="h-8 w-8" />
-        </div>
+        <Layers className="mx-auto h-12 w-12 text-indigo-500/80 dark:text-indigo-400 stroke-[1.5]" />
         <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
           No flashcards yet
         </h3>

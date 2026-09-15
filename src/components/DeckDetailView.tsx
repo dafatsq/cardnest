@@ -121,9 +121,7 @@ export function DeckDetailView({ category, flashcards, error }: Props) {
       <div className="mb-8 flex flex-col gap-5 pb-6 border-b border-slate-200/80 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center gap-3.5">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
-              <Layers className="h-6 w-6" />
-            </span>
+            <Layers className="h-9 w-9 text-indigo-600 dark:text-indigo-400 shrink-0 stroke-[1.75]" />
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
@@ -177,9 +175,7 @@ export function DeckDetailView({ category, flashcards, error }: Props) {
       {/* Cards Section */}
       {flashcards.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-300 bg-white/60 p-12 text-center dark:border-slate-800 dark:bg-slate-900/40">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
-            <Sparkles className="h-8 w-8" />
-          </div>
+          <Sparkles className="mx-auto h-12 w-12 text-indigo-500/80 dark:text-indigo-400 stroke-[1.5]" />
           <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
             This deck is empty
           </h3>

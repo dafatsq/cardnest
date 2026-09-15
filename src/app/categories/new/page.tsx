@@ -40,9 +40,7 @@ export default async function NewCategoryPage() {
         {/* Page Title */}
         <div className="mb-8">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
-              <FolderPlus className="h-5 w-5" />
-            </span>
+            <FolderPlus className="h-8 w-8 text-indigo-600 dark:text-indigo-400 shrink-0 stroke-[1.75]" />
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
                 Create New Category Deck

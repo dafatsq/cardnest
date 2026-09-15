@@ -37,9 +37,7 @@ export function Navbar({ user }: { user: User }) {
             href="/"
             className="flex items-center gap-2.5 font-bold tracking-tight text-slate-900 transition-opacity hover:opacity-90 dark:text-slate-100"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-md shadow-indigo-500/20">
-              <Layers className="h-5 w-5" />
-            </span>
+            <Layers className="h-6 w-6 text-indigo-600 dark:text-indigo-400 shrink-0" />
             <span className="text-lg">CardNest</span>
           </Link>
 

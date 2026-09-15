@@ -173,9 +173,7 @@ function StudyModalContent({
       {/* Floating Top Navigation Bar */}
       <div className="w-full max-w-5xl mx-auto flex items-center justify-between px-6 py-4 sm:py-6 shrink-0 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-400 ring-1 ring-indigo-500/30">
-            <Sparkles className="h-4 w-4" />
-          </span>
+          <Sparkles className="h-5 w-5 text-indigo-400 shrink-0" />
           <div>
             <h2 className="text-sm font-semibold tracking-wide text-white">
               {categoryName}
@@ -239,9 +237,7 @@ function StudyModalContent({
         {isFinished ? (
           /* FULL SCREEN COMPLETION STAGE */
           <div className="my-auto flex max-w-lg flex-col items-center text-center animate-pop-in">
-            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-indigo-500/20 text-indigo-400 shadow-[0_0_50px_rgba(99,102,241,0.3)] ring-1 ring-indigo-500/40">
-              <Trophy className="h-12 w-12 text-amber-400 animate-bounce" />
-            </div>
+            <Trophy className="mb-6 h-16 w-16 text-amber-400 animate-bounce drop-shadow-[0_0_25px_rgba(251,191,36,0.6)]" />
             <h3 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Deck Completed!</h3>
             <p className="mt-3 text-base text-slate-300 max-w-sm">
               Great job! You reviewed all {deck.length} flashcards in &ldquo;{categoryName}&rdquo;.
