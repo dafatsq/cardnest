@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import Link from "next/link"
 import { Category, Flashcard } from "@/types"
 import { InteractiveFlashcard } from "./InteractiveFlashcard"
@@ -10,10 +10,13 @@ import {
   Plus,
   Search,
   ChevronRight,
+  ChevronLeft,
   Edit3,
   Layers,
   Sparkles,
   ArrowLeft,
+  LayoutGrid,
+  CreditCard,
 } from "lucide-react"
 
 interface Props {
@@ -25,6 +28,12 @@ interface Props {
 export function DeckDetailView({ category, flashcards, error }: Props) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isStudyOpen, setIsStudyOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<"grid" | "single">("grid")
+  const [focusedIndex, setFocusedIndex] = useState(0)
+  const [isSwitching, setIsSwitching] = useState(false)
+  const [switchClass, setSwitchClass] = useState("")
+  const [enterClass, setEnterClass] = useState("animate-card-enter-right")
+  const [touchStartX, setTouchStartX] = useState<number | null>(null)
 
   const filteredCards = useMemo(() => {
     if (!searchQuery.trim()) return flashcards
@@ -35,6 +44,63 @@ export function DeckDetailView({ category, flashcards, error }: Props) {
         (c.back_text && c.back_text.toLowerCase().includes(q))
     )
   }, [flashcards, searchQuery])
+
+  // Clamped focusedIndex safe against filtered cards list changes
+  const safeFocusedIndex = Math.min(
+    focusedIndex,
+    Math.max(0, filteredCards.length - 1)
+  )
+
+  const triggerFocusSwitch = useCallback(
+    (action: "next" | "prev") => {
+      if (isSwitching || filteredCards.length <= 1) return
+
+      if (action === "prev") {
+        if (safeFocusedIndex <= 0) return
+        setIsSwitching(true)
+        setSwitchClass("animate-card-exit-right")
+        setTimeout(() => {
+          setFocusedIndex(Math.max(0, safeFocusedIndex - 1))
+          setEnterClass("animate-card-enter-left")
+          setSwitchClass("")
+          setIsSwitching(false)
+        }, 220)
+        return
+      }
+
+      if (action === "next") {
+        if (safeFocusedIndex >= filteredCards.length - 1) return
+        setIsSwitching(true)
+        setSwitchClass("animate-card-exit-left")
+        setTimeout(() => {
+          setFocusedIndex(Math.min(filteredCards.length - 1, safeFocusedIndex + 1))
+          setEnterClass("animate-card-enter-right")
+          setSwitchClass("")
+          setIsSwitching(false)
+        }, 220)
+        return
+      }
+    },
+    [filteredCards.length, safeFocusedIndex, isSwitching]
+  )
+
+  // Keyboard navigation when in single card mode
+  useEffect(() => {
+    if (viewMode !== "single" || isStudyOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        e.preventDefault()
+        triggerFocusSwitch("next")
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault()
+        triggerFocusSwitch("prev")
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [viewMode, isStudyOpen, triggerFocusSwitch])
 
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
@@ -132,10 +198,44 @@ export function DeckDetailView({ category, flashcards, error }: Props) {
         </div>
       ) : (
         <div>
-          {/* Search bar inside deck */}
+          {/* Toolbar: Search and View Mode Switcher */}
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
-              Showing {filteredCards.length} of {flashcards.length} cards
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                Showing {filteredCards.length} of {flashcards.length} cards
+              </span>
+
+              {/* View Mode Toggle */}
+              {filteredCards.length > 0 && (
+                <div className="flex items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("grid")}
+                    title="Grid View"
+                    className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                      viewMode === "grid"
+                        ? "bg-white text-indigo-600 shadow-sm dark:bg-slate-900 dark:text-indigo-400"
+                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Grid</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("single")}
+                    title="Card Switcher"
+                    className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                      viewMode === "single"
+                        ? "bg-white text-indigo-600 shadow-sm dark:bg-slate-900 dark:text-indigo-400"
+                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    <CreditCard className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Card Switcher</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {flashcards.length > 2 && (
@@ -152,18 +252,107 @@ export function DeckDetailView({ category, flashcards, error }: Props) {
             )}
           </div>
 
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredCards.map((card, index) => (
-              <InteractiveFlashcard
-                key={card.id}
-                index={index}
-                card={card}
-                categoryName={category.name}
-                categoryId={category.id}
-              />
-            ))}
-          </div>
+          {filteredCards.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-800">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                No flashcards match &ldquo;{searchQuery}&rdquo;.
+              </p>
+            </div>
+          ) : viewMode === "single" ? (
+            /* ANIMATED SINGLE CARD SWITCHER */
+            <div className="flex flex-col items-center justify-center py-6">
+              <div className="relative h-80 w-full max-w-lg flex items-center justify-center">
+                {/* 2nd Stack Card */}
+                {safeFocusedIndex + 2 < filteredCards.length && (
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 rounded-2xl border border-slate-200/40 bg-slate-100/60 shadow-sm translate-y-3 scale-[0.92] opacity-40 dark:border-slate-800 dark:bg-slate-800/40 transition-all duration-300"
+                  />
+                )}
+
+                {/* 1st Stack Card */}
+                {safeFocusedIndex + 1 < filteredCards.length && (
+                  <div
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute inset-0 rounded-2xl border border-slate-200/80 bg-white/80 shadow-md transition-all duration-300 dark:border-slate-700/60 dark:bg-slate-800/70 ${
+                      isSwitching
+                        ? "translate-y-0 scale-100 opacity-95"
+                        : "translate-y-1.5 scale-[0.96] opacity-70"
+                    }`}
+                  />
+                )}
+
+                {/* Current Card */}
+                <div
+                  key={filteredCards[safeFocusedIndex].id}
+                  onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+                  onTouchEnd={(e) => {
+                    if (touchStartX === null || isSwitching) return
+                    const diff = touchStartX - e.changedTouches[0].clientX
+                    if (diff > 50 && safeFocusedIndex < filteredCards.length - 1) {
+                      triggerFocusSwitch("next")
+                    } else if (diff < -50 && safeFocusedIndex > 0) {
+                      triggerFocusSwitch("prev")
+                    }
+                    setTouchStartX(null)
+                  }}
+                  className={`w-full h-full ${switchClass || enterClass}`}
+                >
+                  <InteractiveFlashcard
+                    index={safeFocusedIndex}
+                    card={filteredCards[safeFocusedIndex]}
+                    categoryName={category.name}
+                    categoryId={category.id}
+                  />
+                </div>
+              </div>
+
+              {/* Navigation Controls */}
+              <div className="mt-8 flex items-center justify-between w-full max-w-lg">
+                <button
+                  type="button"
+                  onClick={() => triggerFocusSwitch("prev")}
+                  disabled={safeFocusedIndex === 0 || isSwitching}
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:hover:bg-white active:scale-95 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Previous [←]</span>
+                </button>
+
+                <div className="flex flex-col items-center">
+                  <span className="font-mono text-xs font-medium text-slate-600 dark:text-slate-400">
+                    Card {safeFocusedIndex + 1} of {filteredCards.length}
+                  </span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                    Use arrow keys to switch
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => triggerFocusSwitch("next")}
+                  disabled={safeFocusedIndex === filteredCards.length - 1 || isSwitching}
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:hover:bg-white active:scale-95 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  <span>Next [→]</span>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Cards Grid */
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredCards.map((card, index) => (
+                <InteractiveFlashcard
+                  key={card.id}
+                  index={index}
+                  card={card}
+                  categoryName={category.name}
+                  categoryId={category.id}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

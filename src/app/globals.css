@@ -66,8 +66,68 @@
   }
 }
 
+@keyframes cardExitRight {
+  0% {
+    transform: translateX(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%) rotate(8deg) scale(0.92);
+    opacity: 0;
+  }
+}
+
+@keyframes cardExitLeft {
+  0% {
+    transform: translateX(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-120%) rotate(-8deg) scale(0.92);
+    opacity: 0;
+  }
+}
+
+@keyframes cardEnterFromRight {
+  0% {
+    transform: translateX(70px) scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cardEnterFromLeft {
+  0% {
+    transform: translateX(-70px) scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
 .animate-card-enter {
   animation: cardEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.animate-card-exit-right {
+  animation: cardExitRight 0.28s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+
+.animate-card-exit-left {
+  animation: cardExitLeft 0.28s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+
+.animate-card-enter-right {
+  animation: cardEnterFromRight 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-card-enter-left {
+  animation: cardEnterFromLeft 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-slide-right {
