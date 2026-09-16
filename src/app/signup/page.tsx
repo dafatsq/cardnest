@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
 import {
@@ -19,8 +19,13 @@ import {
 
 export const dynamic = "force-dynamic"
 
-function formatSignupError(error: unknown): string {
-  if (!error) return "An unexpected error occurred. Please try again."
+interface ParsedAuthError {
+  message: string
+  isDuplicateUser?: boolean
+}
+
+function parseSignupError(error: unknown): ParsedAuthError {
+  if (!error) return { message: "An unexpected error occurred. Please try again." }
 
   const rawMessage =
     typeof error === "string"
@@ -36,36 +41,43 @@ function formatSignupError(error: unknown): string {
     lower.includes("already exists") ||
     lower.includes("user_already_exists")
   ) {
-    return "An account with this email already exists. Please sign in instead."
+    return {
+      message: "An account with this email already exists.",
+      isDuplicateUser: true,
+    }
   }
 
   if (lower.includes("password should be at least")) {
-    return "Password must be at least 6 characters long."
+    return { message: "Password must be at least 6 characters long." }
   }
 
   if (lower.includes("unable to validate email") || lower.includes("invalid format")) {
-    return "Please enter a valid email address."
+    return { message: "Please enter a valid email address." }
   }
 
   if (lower.includes("too many requests") || lower.includes("rate limit")) {
-    return "Too many signup attempts. Please wait a moment before trying again."
+    return { message: "Too many signup attempts. Please wait a moment before trying again." }
   }
 
   if (lower.includes("network") || lower.includes("failed to fetch")) {
-    return "Network error: Unable to connect to the server. Please check your internet connection."
+    return {
+      message: "Network error: Unable to connect to the server. Please check your internet connection.",
+    }
   }
 
-  return rawMessage
+  return { message: rawMessage }
 }
 
-export default function SignupPage() {
-  const [email, setEmail] = useState("")
+function SignupForm() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const [email, setEmail] = useState(() => searchParams.get("email") || "")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<ParsedAuthError | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -74,12 +86,12 @@ export default function SignupPage() {
 
     const trimmedEmail = email.trim()
     if (!trimmedEmail) {
-      setError("Please enter your email address.")
+      setError({ message: "Please enter your email address." })
       return
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters long.")
+      setError({ message: "Password must be at least 6 characters long." })
       return
     }
 
@@ -97,7 +109,7 @@ export default function SignupPage() {
       })
 
       if (signUpError) {
-        setError(formatSignupError(signUpError))
+        setError(parseSignupError(signUpError))
         setLoading(false)
         return
       }
@@ -115,14 +127,18 @@ export default function SignupPage() {
         })
 
         if (signInError) {
-          router.push(`/login?message=${encodeURIComponent("Account created! Please sign in.")}`)
+          router.push(
+            `/login?email=${encodeURIComponent(trimmedEmail)}&message=${encodeURIComponent(
+              "Account created! Please sign in."
+            )}`
+          )
         } else {
           router.push("/")
           router.refresh()
         }
       }
     } catch (err: unknown) {
-      setError(formatSignupError(err))
+      setError(parseSignupError(err))
       setLoading(false)
     }
   }
@@ -192,15 +208,41 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <div className="mt-6 flex items-start justify-between gap-2.5 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300 animate-pop-in">
-              <div className="flex items-start gap-2.5">
-                <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-500 mt-0.5" />
-                <p className="leading-relaxed">{error}</p>
+            <div
+              className={`mt-6 flex items-start justify-between gap-2.5 rounded-2xl border p-4 text-xs font-medium animate-pop-in ${
+                error.isDuplicateUser
+                  ? "border-amber-200 bg-amber-50/90 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200"
+                  : "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+              }`}
+            >
+              <div className="flex items-start gap-2.5 flex-1">
+                <AlertCircle
+                  className={`h-4 w-4 flex-shrink-0 mt-0.5 ${
+                    error.isDuplicateUser ? "text-amber-600 dark:text-amber-400" : "text-red-500"
+                  }`}
+                />
+                <div className="flex-1 space-y-1">
+                  <p className="leading-relaxed font-semibold">{error.message}</p>
+                  {error.isDuplicateUser ? (
+                    <div className="pt-1">
+                      <p className="text-amber-800/90 dark:text-amber-300/80 mb-2">
+                        Did you mean to sign in? You can log in directly with this email.
+                      </p>
+                      <Link
+                        href={`/login?email=${encodeURIComponent(email.trim())}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 active:scale-[0.98] transition-all dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                      >
+                        <span>Sign in to this account</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  ) : null}
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setError(null)}
-                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
+                className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors p-0.5"
                 aria-label="Dismiss error"
               >
                 <X className="h-3.5 w-3.5" />
@@ -303,12 +345,29 @@ export default function SignupPage() {
 
           <p className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
             Already have an account?{" "}
-            <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+            <Link
+              href={email.trim() ? `/login?email=${encodeURIComponent(email.trim())}` : "/login"}
+              className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            >
               Sign in
             </Link>
           </p>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent"></div>
+        </div>
+      }
+    >
+      <SignupForm />
+    </Suspense>
   )
 }

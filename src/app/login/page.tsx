@@ -19,8 +19,13 @@ import {
 
 export const dynamic = "force-dynamic"
 
-function formatLoginError(error: unknown): string {
-  if (!error) return "An unexpected error occurred. Please try again."
+interface ParsedAuthError {
+  message: string
+  isInvalidCredentials?: boolean
+}
+
+function parseLoginError(error: unknown): ParsedAuthError {
+  if (!error) return { message: "An unexpected error occurred. Please try again." }
 
   const rawMessage =
     typeof error === "string"
@@ -36,11 +41,17 @@ function formatLoginError(error: unknown): string {
     lower.includes("invalid_grant") ||
     lower.includes("invalid credentials")
   ) {
-    return "Incorrect email or password. Please verify your credentials and try again."
+    return {
+      message: "Incorrect email or password. Please verify your credentials and try again.",
+      isInvalidCredentials: true,
+    }
   }
 
   if (lower.includes("email not confirmed")) {
-    return "This account's email has not been confirmed yet. Since email verification is now disabled, please sign up again or contact support."
+    return {
+      message:
+        "This account's email has not been confirmed yet. Since email verification is now disabled, please sign up again or contact support.",
+    }
   }
 
   if (
@@ -48,22 +59,31 @@ function formatLoginError(error: unknown): string {
     lower.includes("rate limit") ||
     lower.includes("over_email_send_rate_limit")
   ) {
-    return "Too many sign-in attempts. For security reasons, please wait a minute before trying again."
+    return {
+      message: "Too many sign-in attempts. For security reasons, please wait a minute before trying again.",
+    }
   }
 
   if (lower.includes("user not found")) {
-    return "No account found with this email address. Please sign up first."
+    return {
+      message: "No account found with this email address. Please sign up first.",
+      isInvalidCredentials: true,
+    }
   }
 
   if (lower.includes("network") || lower.includes("failed to fetch")) {
-    return "Network error: Unable to connect to the server. Please check your internet connection."
+    return {
+      message: "Network error: Unable to connect to the server. Please check your internet connection.",
+    }
   }
 
   if (lower.includes("password should be at least")) {
-    return "Password must be at least 6 characters long."
+    return {
+      message: "Password must be at least 6 characters long.",
+    }
   }
 
-  return rawMessage
+  return { message: rawMessage }
 }
 
 function LoginForm() {
@@ -71,11 +91,11 @@ function LoginForm() {
   const errorParam = searchParams.get("error_description") || searchParams.get("error")
   const messageParam = searchParams.get("message")
 
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(() => searchParams.get("email") || "")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(() =>
-    errorParam ? formatLoginError(errorParam) : null
+  const [error, setError] = useState<ParsedAuthError | null>(() =>
+    errorParam ? parseLoginError(errorParam) : null
   )
   const [infoMessage, setInfoMessage] = useState<string | null>(() => messageParam || null)
   const [loading, setLoading] = useState(false)
@@ -88,12 +108,12 @@ function LoginForm() {
 
     const trimmedEmail = email.trim()
     if (!trimmedEmail) {
-      setError("Please enter your email address.")
+      setError({ message: "Please enter your email address." })
       return
     }
 
     if (!password) {
-      setError("Please enter your password.")
+      setError({ message: "Please enter your password." })
       return
     }
 
@@ -107,7 +127,7 @@ function LoginForm() {
       })
 
       if (signInError) {
-        setError(formatLoginError(signInError))
+        setError(parseLoginError(signInError))
         setLoading(false)
         return
       }
@@ -122,7 +142,7 @@ function LoginForm() {
       router.push(targetPath)
       router.refresh()
     } catch (err: unknown) {
-      setError(formatLoginError(err))
+      setError(parseLoginError(err))
       setLoading(false)
     }
   }
@@ -208,14 +228,27 @@ function LoginForm() {
           {/* Error Banner */}
           {error && (
             <div className="mt-6 flex items-start justify-between gap-2.5 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300 animate-pop-in">
-              <div className="flex items-start gap-2.5">
+              <div className="flex items-start gap-2.5 flex-1">
                 <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-500 mt-0.5" />
-                <p className="leading-relaxed">{error}</p>
+                <div className="flex-1 space-y-1">
+                  <p className="leading-relaxed font-semibold">{error.message}</p>
+                  {error.isInvalidCredentials && (
+                    <p className="text-red-600/90 dark:text-red-400/90 pt-0.5">
+                      Don&apos;t have an account yet?{" "}
+                      <Link
+                        href={email.trim() ? `/signup?email=${encodeURIComponent(email.trim())}` : "/signup"}
+                        className="font-bold underline hover:text-red-900 dark:hover:text-red-100 transition-colors"
+                      >
+                        Create an account here &rarr;
+                      </Link>
+                    </p>
+                  )}
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setError(null)}
-                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
+                className="text-red-400 hover:text-red-600 dark:text-red-400 dark:hover:text-red-200 transition-colors p-0.5"
                 aria-label="Dismiss error"
               >
                 <X className="h-3.5 w-3.5" />
@@ -301,7 +334,10 @@ function LoginForm() {
 
           <p className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+            <Link
+              href={email.trim() ? `/signup?email=${encodeURIComponent(email.trim())}` : "/signup"}
+              className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            >
               Sign up free
             </Link>
           </p>
