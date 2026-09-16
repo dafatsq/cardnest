@@ -14,9 +14,49 @@ import {
   Sparkles,
   AlertCircle,
   CheckCircle2,
+  X,
 } from "lucide-react"
 
 export const dynamic = "force-dynamic"
+
+function formatSignupError(error: unknown): string {
+  if (!error) return "An unexpected error occurred. Please try again."
+
+  const rawMessage =
+    typeof error === "string"
+      ? error
+      : typeof error === "object" && error !== null && "message" in error
+      ? String((error as { message: unknown }).message)
+      : String(error)
+
+  const lower = rawMessage.toLowerCase()
+
+  if (
+    lower.includes("user already registered") ||
+    lower.includes("already exists") ||
+    lower.includes("user_already_exists")
+  ) {
+    return "An account with this email already exists. Please sign in instead."
+  }
+
+  if (lower.includes("password should be at least")) {
+    return "Password must be at least 6 characters long."
+  }
+
+  if (lower.includes("unable to validate email") || lower.includes("invalid format")) {
+    return "Please enter a valid email address."
+  }
+
+  if (lower.includes("too many requests") || lower.includes("rate limit")) {
+    return "Too many signup attempts. Please wait a moment before trying again."
+  }
+
+  if (lower.includes("network") || lower.includes("failed to fetch")) {
+    return "Network error: Unable to connect to the server. Please check your internet connection."
+  }
+
+  return rawMessage
+}
 
 export default function SignupPage() {
   const [email, setEmail] = useState("")
@@ -29,35 +69,61 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setLoading(true)
     setError(null)
     setSuccessMessage(null)
 
-    const supabase = createClient()
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) {
+      setError("Please enter your email address.")
+      return
+    }
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/`,
-      },
-    })
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.")
+      return
+    }
 
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-    } else {
+    setLoading(true)
+
+    try {
+      const supabase = createClient()
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: trimmedEmail,
+        password,
+        options: {
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/`,
+        },
+      })
+
+      if (signUpError) {
+        setError(formatSignupError(signUpError))
+        setLoading(false)
+        return
+      }
+
+      // Email confirmation is disabled (mailer_autoconfirm enabled).
+      // Check if session exists or sign in immediately.
       if (data?.session) {
-        // Automatically signed in
         router.push("/")
         router.refresh()
       } else {
-        // Confirmation email sent
-        setSuccessMessage(
-          "Account created! Please check your email inbox to confirm your registration."
-        )
-        setLoading(false)
+        // Automatically sign in with credentials
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password,
+        })
+
+        if (signInError) {
+          router.push(`/login?message=${encodeURIComponent("Account created! Please sign in.")}`)
+        } else {
+          router.push("/")
+          router.refresh()
+        }
       }
+    } catch (err: unknown) {
+      setError(formatSignupError(err))
+      setLoading(false)
     }
   }
 
@@ -126,16 +192,36 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <div className="mt-6 flex items-center gap-2.5 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
-              <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-500" />
-              <p>{error}</p>
+            <div className="mt-6 flex items-start justify-between gap-2.5 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300 animate-pop-in">
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-500 mt-0.5" />
+                <p className="leading-relaxed">{error}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
+                aria-label="Dismiss error"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
 
           {successMessage && (
-            <div className="mt-6 flex items-center gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-medium text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
-              <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-500" />
-              <p>{successMessage}</p>
+            <div className="mt-6 flex items-start justify-between gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-medium text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 animate-pop-in">
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-600 mt-0.5 dark:text-emerald-400" />
+                <p className="leading-relaxed">{successMessage}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSuccessMessage(null)}
+                className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200"
+                aria-label="Dismiss message"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
 
@@ -150,8 +236,15 @@ export default function SignupPage() {
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (error) setError(null)
+                  }}
+                  className={`w-full rounded-xl border bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 dark:bg-slate-900 dark:text-slate-100 ${
+                    error
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500/20 dark:border-red-800"
+                      : "border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20 dark:border-slate-800"
+                  }`}
                   placeholder="you@example.com"
                 />
               </div>
@@ -167,8 +260,15 @@ export default function SignupPage() {
                   type={showPassword ? "text" : "password"}
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-10 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    if (error) setError(null)
+                  }}
+                  className={`w-full rounded-xl border bg-white pl-10 pr-10 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 dark:bg-slate-900 dark:text-slate-100 ${
+                    error
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500/20 dark:border-red-800"
+                      : "border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20 dark:border-slate-800"
+                  }`}
                   placeholder="At least 6 characters"
                   minLength={6}
                 />
@@ -185,10 +285,13 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-500 hover:shadow-lg disabled:opacity-50"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-500 hover:shadow-lg disabled:opacity-50 active:scale-[0.99]"
             >
               {loading ? (
-                <span>Creating your account...</span>
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                  Creating your account...
+                </span>
               ) : (
                 <>
                   <span>Create Account</span>
