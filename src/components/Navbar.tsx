@@ -9,10 +9,10 @@ import {
   LogOut,
   Plus,
   LayoutDashboard,
-  FolderTree,
   Menu,
   X,
 } from "lucide-react"
+import { CardsDeckIcon } from "@/components/icons/CardsDeckIcon"
 import type { User } from "@supabase/supabase-js"
 
 export function Navbar({ user }: { user: User }) {
@@ -63,7 +63,7 @@ export function Navbar({ user }: { user: User }) {
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100"
               }`}
             >
-              <FolderTree className="h-4 w-4" />
+              <CardsDeckIcon className="h-4 w-4" />
               All Decks
             </Link>
           </nav>
@@ -149,7 +149,7 @@ export function Navbar({ user }: { user: User }) {
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
             >
-              <FolderTree className="h-4 w-4" />
+              <CardsDeckIcon className="h-4 w-4" />
               All Decks
             </Link>
 

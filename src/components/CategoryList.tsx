@@ -4,7 +4,6 @@ import { useState, useMemo } from "react"
 import Link from "next/link"
 import { Category, Flashcard } from "@/types"
 import {
-  Folder,
   Edit3,
   Trash2,
   Play,
@@ -13,6 +12,7 @@ import {
   Check,
   X,
 } from "lucide-react"
+import { CardsDeckIcon } from "@/components/icons/CardsDeckIcon"
 import { deleteCategoryAction } from "@/app/actions/category-actions"
 import { StudyModal } from "./StudyModal"
 
@@ -61,7 +61,7 @@ export function CategoryList({ categories, flashcards = [], error }: Props) {
   if (!categories.length) {
     return (
       <div className="mb-10 rounded-3xl border border-dashed border-slate-300 bg-white/60 p-10 text-center dark:border-slate-800 dark:bg-slate-900/40">
-        <Folder className="mx-auto h-12 w-12 text-indigo-500/80 dark:text-indigo-400 stroke-[1.5]" />
+        <CardsDeckIcon className="mx-auto h-12 w-12 text-indigo-500/80 dark:text-indigo-400" />
         <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
           No categories yet
         </h3>
@@ -123,7 +123,7 @@ export function CategoryList({ categories, flashcards = [], error }: Props) {
               {/* Category info */}
               <div>
                 <div className="flex items-start justify-between gap-2">
-                  <Folder className="h-6 w-6 text-indigo-600 dark:text-indigo-400 shrink-0 stroke-[1.75]" />
+                  <CardsDeckIcon className="h-6 w-6 text-indigo-600 dark:text-indigo-400 shrink-0" />
 
                   {/* Actions */}
                   <div className="flex items-center gap-1">

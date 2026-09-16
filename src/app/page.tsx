@@ -4,7 +4,8 @@ import Link from "next/link"
 import { Navbar } from "@/components/Navbar"
 import { CategoryList } from "@/components/CategoryList"
 import { FlashcardList } from "@/components/FlashcardList"
-import { Plus, Sparkles, Folder, Layers, AlertTriangle } from "lucide-react"
+import { Plus, Sparkles, Layers, AlertTriangle } from "lucide-react"
+import { CardsDeckIcon } from "@/components/icons/CardsDeckIcon"
 
 import { Flashcard } from "@/types"
 import type { PostgrestError } from "@supabase/supabase-js"
@@ -91,7 +92,7 @@ export default async function DashboardPage({
           <div className="flex flex-wrap items-center gap-5 sm:gap-6">
             <div className="flex items-center gap-5 divide-x divide-slate-200 dark:divide-slate-800">
               <div className="flex items-center gap-2.5">
-                <Folder className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+                <CardsDeckIcon className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
                 <div className="flex items-baseline gap-1">
                   <span className="text-xl font-extrabold text-slate-900 dark:text-white">
                     {categoryList.length}

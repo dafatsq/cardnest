@@ -4,7 +4,8 @@ import Link from "next/link"
 import { Navbar } from "@/components/Navbar"
 import { CategoryForm } from "@/components/CategoryForm"
 import { createCategoryAction } from "@/app/actions/category-actions"
-import { ChevronRight, FolderPlus } from "lucide-react"
+import { ChevronRight } from "lucide-react"
+import { CardsDeckPlusIcon } from "@/components/icons/CardsDeckIcon"
 
 export const dynamic = "force-dynamic"
 
@@ -40,7 +41,7 @@ export default async function NewCategoryPage() {
         {/* Page Title */}
         <div className="mb-8">
           <div className="flex items-center gap-3">
-            <FolderPlus className="h-8 w-8 text-indigo-600 dark:text-indigo-400 shrink-0 stroke-[1.75]" />
+            <CardsDeckPlusIcon className="h-8 w-8 text-indigo-600 dark:text-indigo-400 shrink-0" />
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
                 Create New Category Deck
