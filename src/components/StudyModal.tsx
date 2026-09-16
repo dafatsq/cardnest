@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
 import { Flashcard } from "@/types"
 import {
   X,
   RotateCw,
+  RotateCcw,
   ChevronLeft,
   ChevronRight,
   Shuffle,
@@ -32,27 +33,54 @@ function StudyModalContent({
   onClose: () => void
 }) {
   const [deck, setDeck] = useState<Flashcard[]>(() => [...cards])
+  const [isReviewRound, setIsReviewRound] = useState(false)
+  const [cardStatusMap, setCardStatusMap] = useState<Record<string, "known" | "learning">>({})
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
-  const [knownCount, setKnownCount] = useState(0)
-  const [learningCount, setLearningCount] = useState(0)
   const [isFinished, setIsFinished] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [transitionClass, setTransitionClass] = useState("")
   const [enterClass, setEnterClass] = useState("animate-card-enter-right")
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
 
-  const resetSession = () => {
+
+
+  const knownCount = useMemo(() => {
+    return Object.values(cardStatusMap).filter((s) => s === "known").length
+  }, [cardStatusMap])
+
+  const learningCount = useMemo(() => {
+    return Object.values(cardStatusMap).filter((s) => s === "learning").length
+  }, [cardStatusMap])
+
+  const needsReviewCards = useMemo(() => {
+    return deck.filter((c) => cardStatusMap[c.id] === "learning")
+  }, [deck, cardStatusMap])
+
+  const resetSession = useCallback(() => {
     setDeck([...cards])
+    setIsReviewRound(false)
+    setCardStatusMap({})
     setCurrentIndex(0)
     setIsFlipped(false)
-    setKnownCount(0)
-    setLearningCount(0)
     setIsFinished(false)
     setIsTransitioning(false)
     setTransitionClass("")
     setEnterClass("animate-card-enter-right")
-  }
+  }, [cards])
+
+  const startReviewMissed = useCallback(() => {
+    if (needsReviewCards.length === 0) return
+    setDeck([...needsReviewCards])
+    setCardStatusMap({})
+    setIsReviewRound(true)
+    setCurrentIndex(0)
+    setIsFlipped(false)
+    setIsFinished(false)
+    setIsTransitioning(false)
+    setTransitionClass("")
+    setEnterClass("animate-card-enter-right")
+  }, [needsReviewCards])
 
   const shuffleDeck = () => {
     if (isTransitioning) return
@@ -89,10 +117,10 @@ function StudyModalContent({
         return
       }
 
-      if (action === "known") {
-        setKnownCount((prev) => prev + 1)
-      } else if (action === "learning") {
-        setLearningCount((prev) => prev + 1)
+      if (action === "known" && currentCard) {
+        setCardStatusMap((prev) => ({ ...prev, [currentCard.id]: "known" }))
+      } else if (action === "learning" && currentCard) {
+        setCardStatusMap((prev) => ({ ...prev, [currentCard.id]: "learning" }))
       }
 
       if (currentIndex >= deck.length - 1) {
@@ -125,7 +153,7 @@ function StudyModalContent({
         setIsTransitioning(false)
       }, 220)
     },
-    [currentIndex, deck.length, isTransitioning]
+    [currentIndex, currentCard, deck.length, isTransitioning]
   )
 
   // Keyboard navigation
@@ -133,29 +161,63 @@ function StudyModalContent({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose()
-      } else if (e.key === " " || e.key === "Enter") {
+        return
+      }
+
+      // Keyboard shortcuts on completion screen
+      if (isFinished) {
+        if (e.key === "1" || e.key === "r" || e.key === "R") {
+          e.preventDefault()
+          if (needsReviewCards.length > 0) {
+            startReviewMissed()
+          } else {
+            resetSession()
+          }
+        } else if (e.key === "2") {
+          e.preventDefault()
+          resetSession()
+        } else if (e.key === "Enter") {
+          e.preventDefault()
+          if (needsReviewCards.length > 0) {
+            startReviewMissed()
+          } else {
+            resetSession()
+          }
+        }
+        return
+      }
+
+      if (e.key === " " || e.key === "Enter") {
         e.preventDefault()
-        if (!isFinished && !isTransitioning) {
+        if (!isTransitioning) {
           setIsFlipped((prev) => !prev)
         }
       } else if (e.key === "ArrowRight") {
         e.preventDefault()
-        if (!isFinished) triggerSwitch("next")
+        triggerSwitch("next")
       } else if (e.key === "ArrowLeft") {
         e.preventDefault()
-        if (!isFinished) triggerSwitch("prev")
+        triggerSwitch("prev")
       } else if (e.key === "1") {
         e.preventDefault()
-        if (!isFinished) triggerSwitch("learning")
+        triggerSwitch("learning")
       } else if (e.key === "2") {
         e.preventDefault()
-        if (!isFinished) triggerSwitch("known")
+        triggerSwitch("known")
       }
     }
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [isFinished, isTransitioning, triggerSwitch, onClose])
+  }, [
+    isFinished,
+    isTransitioning,
+    triggerSwitch,
+    onClose,
+    needsReviewCards.length,
+    startReviewMissed,
+    resetSession,
+  ])
 
   const progressPercent =
     deck.length > 0 ? Math.round(((currentIndex + 1) / deck.length) * 100) : 0
@@ -175,9 +237,17 @@ function StudyModalContent({
         <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-indigo-400 shrink-0" />
           <div>
-            <h2 className="text-sm font-semibold tracking-wide text-white">
-              {categoryName}
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold tracking-wide text-white">
+                {categoryName}
+              </h2>
+              {isReviewRound && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300 ring-1 ring-amber-500/30">
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Review Mode
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-400 font-mono">
               {deck.length > 0 ? `Card ${currentIndex + 1} of ${deck.length}` : "0 cards"}
             </p>
@@ -199,6 +269,17 @@ function StudyModalContent({
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
+          {isReviewRound && (
+            <button
+              type="button"
+              onClick={resetSession}
+              title="Return to full deck"
+              className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-200 transition-all hover:bg-amber-500/20 active:scale-95"
+            >
+              <RotateCw className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Full Deck ({cards.length})</span>
+            </button>
+          )}
           {!isFinished && deck.length > 1 && (
             <button
               type="button"
@@ -238,9 +319,13 @@ function StudyModalContent({
           /* FULL SCREEN COMPLETION STAGE */
           <div className="my-auto flex max-w-lg flex-col items-center text-center animate-pop-in">
             <Trophy className="mb-6 h-16 w-16 text-amber-400 animate-bounce drop-shadow-[0_0_25px_rgba(251,191,36,0.6)]" />
-            <h3 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Deck Completed!</h3>
+            <h3 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+              {isReviewRound ? "Review Session Finished!" : "Deck Completed!"}
+            </h3>
             <p className="mt-3 text-base text-slate-300 max-w-sm">
-              Great job! You reviewed all {deck.length} flashcards in &ldquo;{categoryName}&rdquo;.
+              {needsReviewCards.length > 0
+                ? `You reviewed ${deck.length} ${deck.length === 1 ? "card" : "cards"}. You have ${needsReviewCards.length} ${needsReviewCards.length === 1 ? "card" : "cards"} marked for review.`
+                : `Great job! You mastered all ${deck.length} ${deck.length === 1 ? "card" : "cards"} in this session.`}
             </p>
 
             {/* Stats Summary */}
@@ -263,20 +348,32 @@ function StudyModalContent({
               </div>
             </div>
 
-            <div className="flex gap-4 w-full">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              {needsReviewCards.length > 0 && (
+                <button
+                  type="button"
+                  onClick={startReviewMissed}
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/50 bg-amber-500/20 py-3.5 px-4 text-sm font-bold text-amber-200 shadow-xl shadow-amber-500/20 transition-all hover:bg-amber-500/30 hover:border-amber-400 active:scale-95"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  <span>Review Missed ({needsReviewCards.length}) [1]</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={resetSession}
-                className="flex-1 rounded-2xl border border-white/15 bg-white/10 py-3.5 text-sm font-bold text-white transition-all hover:bg-white/20 active:scale-95"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 py-3.5 px-4 text-sm font-bold text-white transition-all hover:bg-white/20 active:scale-95"
               >
-                Restart Deck
+                <RotateCw className="h-4 w-4" />
+                <span>{isReviewRound ? "Restart Full Deck" : "Restart Deck"} {needsReviewCards.length > 0 ? "[2]" : ""}</span>
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-2xl bg-indigo-600 py-3.5 text-sm font-bold text-white shadow-xl shadow-indigo-600/30 transition-all hover:bg-indigo-500 active:scale-95"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-3.5 px-4 text-sm font-bold text-white shadow-xl shadow-indigo-600/30 transition-all hover:bg-indigo-500 active:scale-95"
               >
-                Finish & Return
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Finish & Return</span>
               </button>
             </div>
           </div>
@@ -482,6 +579,7 @@ export function StudyModal({ cards, categoryName, isOpen, onClose }: Props) {
   if (!isOpen) return null
   return (
     <StudyModalContent
+      key={`${categoryName}-${cards.length}`}
       cards={cards}
       categoryName={categoryName}
       onClose={onClose}
