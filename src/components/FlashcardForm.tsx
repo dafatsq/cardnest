@@ -135,7 +135,7 @@ export default function FlashcardForm({
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* FRONT CARD SIDE */}
-        <div className="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
@@ -210,7 +210,7 @@ export default function FlashcardForm({
         </div>
 
         {/* BACK CARD SIDE */}
-        <div className="flex flex-col justify-between rounded-3xl border border-indigo-200/80 bg-white p-6 shadow-sm dark:border-indigo-900/60 dark:bg-slate-900">
+        <div className="flex flex-col justify-between rounded-2xl border border-indigo-200/80 bg-white p-6 shadow-sm dark:border-indigo-900/60 dark:bg-slate-900">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-indigo-100 dark:border-slate-800">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">

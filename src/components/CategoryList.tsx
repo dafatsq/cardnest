@@ -60,7 +60,7 @@ export function CategoryList({ categories, flashcards = [], error }: Props) {
 
   if (!categories.length) {
     return (
-      <div className="mb-10 rounded-3xl border border-dashed border-slate-300 bg-white/60 p-10 text-center dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="mb-10 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-10 text-center dark:border-slate-800 dark:bg-slate-900/40">
         <CardsDeckIcon className="mx-auto h-12 w-12 text-indigo-500/80 dark:text-indigo-400" />
         <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
           No categories yet
