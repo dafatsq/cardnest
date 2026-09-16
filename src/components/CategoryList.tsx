@@ -123,7 +123,7 @@ export function CategoryList({ categories, flashcards = [], error }: Props) {
               {/* Category info */}
               <div>
                 <div className="flex items-start justify-between gap-2">
-                  <CardsDeckIcon className="h-6 w-6 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <CardsDeckIcon className="h-9 w-9 text-indigo-600 dark:text-indigo-400 shrink-0 transition-transform group-hover:scale-105" />
 
                   {/* Actions */}
                   <div className="flex items-center gap-1">

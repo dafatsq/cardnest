@@ -128,7 +128,7 @@ export function CategoryForm({
 
           <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-start justify-between">
-              <CardsDeckIcon className="h-6 w-6 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <CardsDeckIcon className="h-9 w-9 text-indigo-600 dark:text-indigo-400 shrink-0" />
               <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                 0 cards
               </span>
